@@ -310,7 +310,7 @@ void loop() {
   client.loop();
 
   // ตรวจสอบสถานะของสวิตช์
-  if (digitalRead(resetSwitchPin) == LOW) {
+  if (digitalRead(resetSwitchPin) == HIGH) {
     Serial.println("Reset switch pressed, resetting WiFi configuration...");
     resetWiFiConfig();
   }
