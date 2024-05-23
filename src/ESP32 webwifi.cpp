@@ -100,10 +100,12 @@ const char* htmlForm = R"rawliteral(
 </html>
 )rawliteral";
 
-
 // MQTT client
 WiFiClient espClient;
 PubSubClient client(espClient);
+
+// กำหนดขาของสวิตช์
+const int resetSwitchPin = 26;
 
 // Callback function for MQTT
 void callback(char* topic, byte* message, unsigned int length) {
@@ -176,27 +178,13 @@ void displayMessage(const char* message) {
 void connectToMqttBroker() {
   while (!client.connected()) {
     Serial.println("Connecting to MQTT...");
-    // display.clearDisplay();
-    // display.setCursor(0, 0);
-    // display.println("Connecting to MQTT...");
-    // display.display();
-
     if (client.connect("ESP32Client", mqtt_user, mqtt_password)) {
       Serial.println("Connected to MQTT");
-      // display.clearDisplay();
-      // display.setCursor(0, 0);
-      // display.println("Connected to MQTT");
-      // display.display();
       client.subscribe(mqtt_topic);
     } else {
       Serial.print("Failed, rc=");
       Serial.print(client.state());
       Serial.println(" Retry in 5 seconds");
-      // display.clearDisplay();
-      // display.setCursor(0, 0);
-      // display.println("Failed to connect MQTT");
-      // display.println("Retry in 5 seconds");
-      // display.display();
       delay(5000);
     }
   }
@@ -206,27 +194,13 @@ void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
     Serial.println("Attempting MQTT connection...");
-    // display.clearDisplay();
-    // display.setCursor(0, 0);
-    // display.println("Attempting MQTT connection...");
-    // display.display();
-
     if (client.connect("ESP32Client", mqtt_user, mqtt_password)) {
       Serial.println("Connected to MQTT");
-      // display.clearDisplay();
-      // display.setCursor(0, 0);
-      // display.println("Connected to MQTT");
-      // display.display();
       client.subscribe(mqtt_topic);
     } else {
       Serial.print("Failed, rc=");
       Serial.print(client.state());
       Serial.println(" Retry in 5 seconds");
-      // display.clearDisplay();
-      // display.setCursor(0, 0);
-      // display.println("Failed to connect MQTT");
-      // display.println("Retry in 5 seconds");
-      // display.display();
       delay(5000);
     }
   }
@@ -249,7 +223,10 @@ void setup() {
   display.clearDisplay();
   display.display();
 
-// โหลดข้อมูล Wi-Fi ที่บันทึกไว้
+  // ตั้งค่าสวิตช์
+  pinMode(resetSwitchPin, INPUT_PULLDOWN);
+
+  // โหลดข้อมูล Wi-Fi ที่บันทึกไว้
   String ssid, password;
   loadWiFiConfig(ssid, password);
 
@@ -332,21 +309,12 @@ void loop() {
   }
   client.loop();
 
-  // Publish random temperature values to MQTT
-  // float temperature = random(20, 40);
-  // client.publish(mqtt_topic, String(temperature).c_str());
-
-  // Display temperature on OLED
-  // display.clearDisplay();
-  // display.setTextSize(1);
-  // display.setTextColor(SSD1306_WHITE);
-  // display.setCursor(0, 0);
-  // display.println("Temp:");
-  // display.setCursor(0, 10);
-  // display.println(String(temperature));
-  // display.display();
+  // ตรวจสอบสถานะของสวิตช์
+  if (digitalRead(resetSwitchPin) == LOW) {
+    Serial.println("Reset switch pressed, resetting WiFi configuration...");
+    resetWiFiConfig();
+  }
 
   delay(1000);
 }
-//finish
-//test
+
